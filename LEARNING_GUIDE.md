@@ -156,6 +156,150 @@ python -m streamlit run app.py
 
 ---
 
+# 🚀 明天新项目：一次成功的标准操作顺序
+
+下面是推荐的唯一主流程。按顺序执行，不要同时使用“网页上传文件”和“本地 Git 推送”两条路线。
+
+> 核心原则：GitHub 网页只创建**完全空白的仓库**，所有代码都从本地第一次推送上去。
+
+## A. 本地完成代码并测试
+
+```bash
+mkdir -p ~/new-streamlit-demo
+cd ~/new-streamlit-demo
+
+python3 -m venv .venv
+source .venv/bin/activate
+
+python -m pip install streamlit
+
+# 创建并写好 app.py 后，本地测试
+python -m streamlit run app.py
+```
+
+确认网页正常后，按 `Control + C` 停止服务。
+
+## B. 在第一次 git add 之前准备文件
+
+项目至少应有：
+
+```text
+new-streamlit-demo/
+├── app.py
+├── requirements.txt
+└── .gitignore
+```
+
+`requirements.txt` 只列程序直接需要的包和版本。可用下面的命令查询版本：
+
+```bash
+python -c "import streamlit; print(streamlit.__version__)"
+```
+
+`.gitignore` 提前写好：
+
+```gitignore
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+.streamlit/secrets.toml
+.agents/
+.claude/
+```
+
+先检查目录，确认没有密码、Token、公司数据或不该公开的文件。
+
+## C. 先配置提交身份，再创建第一次提交
+
+```bash
+git config --global user.name "Ronghong Ji"
+git config --global user.email "jironghong1998@gmail.com"
+
+git init -b main
+
+# 明确写出要添加的文件，不要直接使用 git add .
+git add app.py requirements.txt .gitignore
+
+git status
+git commit -m "Create Streamlit app"
+```
+
+`git status` 中不应该出现 `.venv`、`.agents`、`.claude`、Secrets 或其他无关文件。
+
+## D. GitHub 网页只创建空仓库
+
+在 <https://github.com/new> 创建仓库：
+
+- 填写一个从未使用过的仓库名；
+- 选择 `Public` 或 `Private`；
+- **不要**勾选 `Add a README file`；
+- `.gitignore` 选择 `None`；
+- License 选择 `None`；
+- 创建后不要在网页上传或编辑任何文件。
+
+这样远程仓库没有第一次提交，不会与本地形成两套历史。
+
+## E. 连接空仓库并第一次推送
+
+将下面的地址换成新仓库地址：
+
+```bash
+git remote add origin https://github.com/RonghongJi/新仓库名.git
+git remote -v
+git push -u origin main
+```
+
+成功后，本地 `main` 会跟踪远程 `origin/main`。以后不再需要 `-u origin main`，直接 `git push` 即可。
+
+## F. 部署 Streamlit Community Cloud
+
+在 <https://share.streamlit.io> 创建应用：
+
+```text
+Repository: RonghongJi/新仓库名
+Branch: main
+Main file path: app.py
+Python: 与本地兼容的版本
+```
+
+部署完成后获得固定的 `https://...streamlit.app` 地址。
+
+## G. 以后每次更新网站
+
+```bash
+cd ~/new-streamlit-demo
+source .venv/bin/activate
+
+# 修改后先在本地测试
+python -m streamlit run app.py
+```
+
+确认后按 `Control + C`，然后：
+
+```bash
+git status
+git diff
+
+# 只添加本次确实要提交的文件
+git add app.py
+git commit -m "Describe this update"
+git push
+```
+
+GitHub 收到新提交后，Streamlit Community Cloud 会自动重新部署。
+
+## H. 明天不要做的事情
+
+- 不要在本地提交后，又在空 GitHub 仓库中通过网页上传同一批文件；
+- 不要勾选 GitHub 的 README、`.gitignore` 或 License 初始化选项；
+- 不要在没看 `git status` 时直接执行 `git add .`；
+- 不要上传 `.venv`、Secrets、Token 或公司数据；
+- 不要用 `git push --force` 解决普通的同步问题；
+- 不要混用多个 Python，启动时使用 `python -m streamlit run app.py`。
+
+---
+
 # 一、最终做成了什么
 
 本项目完成了一条完整链路：
@@ -520,20 +664,48 @@ __pycache__/
 *.pyc
 .DS_Store
 .streamlit/secrets.toml
+.agents/
+.claude/
 ```
 
 `.venv` 不应上传：它很大、依赖本机平台，而且云端会根据 `requirements.txt` 创建自己的环境。
 
-## 3. 初始化本地 Git
+## 3. 先配置身份，再初始化本地 Git
 
 ```bash
+git config --global user.name "Ronghong Ji"
+git config --global user.email "jironghong1998@gmail.com"
+
 git init -b main
+
+# 明确添加需要的文件，不使用 git add .
 git add app.py requirements.txt .gitignore
 git status
 git commit -m "Create time series Transformer app"
 ```
 
-## 4. GitHub CLI
+提交身份由本机 `git config` 决定，不会自动继承浏览器中的 GitHub 登录身份。应在第一次提交前配置，否则 Git 可能根据电脑用户名生成错误的本地邮箱。
+
+## 4. 在 GitHub 创建完全空白的仓库
+
+推荐使用 GitHub 网页创建仓库，但不要初始化任何内容：
+
+- 不添加 README；
+- 不选择 `.gitignore` 模板；
+- 不选择 License；
+- 不通过网页上传文件。
+
+创建后只复制 HTTPS 仓库地址，在本地执行：
+
+```bash
+git remote add origin https://github.com/RonghongJi/仓库名.git
+git remote -v
+git push -u origin main
+```
+
+这样远程第一次提交直接来自本地，不会产生不相关历史，也不需要合并。
+
+## 5. GitHub CLI（可选，不是主流程）
 
 使用 Homebrew 安装：
 
@@ -547,7 +719,13 @@ HOMEBREW_NO_AUTO_UPDATE=1 brew install gh
 gh auth login --hostname github.com --git-protocol https --web
 ```
 
-本次终端访问 GitHub 设备登录接口发生网络超时，因此改用 GitHub 网页创建仓库并上传文件。两种方法都可以完成部署。
+如果登录成功，也可以用 GitHub CLI 创建仓库。但初学阶段建议坚持上面的单一路线：网页只建空仓库，本地负责第一次推送。
+
+## 6. 本次为什么曾经需要合并
+
+本次实验中，本地先创建了提交，GitHub 网页又独立上传文件并创建了另一份提交。两边没有共同父提交，因此第一次推送被拒绝，必须使用 `--allow-unrelated-histories` 合并。
+
+这属于踩坑复盘，不是推荐步骤。以后按照“空远程仓库 + 本地首次推送”流程，不需要执行该合并命令。
 
 ---
 
@@ -637,17 +815,17 @@ python -m streamlit run app.py
 git status
 git diff
 
-# 提交修改
-git add app.py requirements.txt
+# 提交修改：只添加确实发生变化的文件
+git add app.py
 git commit -m "Describe the change"
 
 # 推送到 GitHub
-git push origin main
+git push
 ```
 
 GitHub 更新后，Streamlit Community Cloud 会检测变化并重新部署。
 
-如果仍使用网页上传，也可以在 GitHub 仓库中编辑或上传新文件，但长期开发建议修复终端 GitHub 登录，使用标准的 `git push` 工作流。
+仓库建立后，建议统一在本地修改并使用 `git push`，不要再通过网页上传同一批文件，以免形成不必要的同步和冲突问题。
 
 ---
 
@@ -754,12 +932,12 @@ git status
 # 查看代码变化
 git diff
 
-# 提交代码
-git add app.py requirements.txt
+# 明确添加需要提交的文件
+git add app.py
 git commit -m "Update app"
 
 # 推送代码
-git push origin main
+git push
 ```
 
 ---
